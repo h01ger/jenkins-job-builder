@@ -196,6 +196,10 @@ def svn(self, xml_parent, data):
     """
     scm = XML.SubElement(xml_parent, 'scm', {'class':
                          'hudson.scm.SubversionSCM'})
+    if 'viewvc-url' in data:
+        browser = XML.SubElement(scm, 'browser', {'class':
+              'hudson.scm.browsers.ViewSVN'})
+        XML.SubElement(browser, 'url').text = data['viewvc-url']
     locations = XML.SubElement(scm, 'locations')
     if 'repos' in data:
         repos = data['repos']
@@ -222,6 +226,12 @@ def svn(self, xml_parent, data):
         updaterclass = 'UpdateUpdater'
     XML.SubElement(scm, 'workspaceUpdater', {'class':
                    'hudson.scm.subversion.' + updaterclass})
+    #if 'includedRegions' in data:
+    XML.SubElement(scm, 'includedRegions').text = data['includedRegions']
+    XML.SubElement(scm, 'excludedRegions').text = data['excludedRegions']
+    XML.SubElement(scm, 'excludedUsers').text = data['excludedUsers']
+    XML.SubElement(scm, 'excludedRevprop').text = data['excludedRevprop']
+    XML.SubElement(scm, 'excludedCommitMessages').text = data['excludedCommitMessages']
 
 
 class SCM(jenkins_jobs.modules.base.Base):
