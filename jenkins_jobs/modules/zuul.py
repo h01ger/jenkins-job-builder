@@ -15,6 +15,14 @@
 """
 The Zuul module adds triggers that configure jobs for use with Zuul_.
 
+To change the Zuul notification URL, set a global default::
+
+  - defaults:
+    name: global
+    zuul-url: http://127.0.0.1:8001/jenkins_endpoint
+
+The above URL is the default.
+
 .. _Zuul: http://ci.openstack.org/zuul/
 """
 
@@ -44,83 +52,94 @@ import jenkins_jobs.modules.base
 
 ZUUL_PARAMETERS = [
     {'string':
-         {'description': 'Zuul provided key to link builds with Gerrit events',
-          'name': 'UUID'}},
+        {'description': 'Zuul provided key to link builds with Gerrit events',
+         'name': 'ZUUL_UUID'}},
     {'string':
-         {'description': 'Zuul pipeline triggering this job',
-          'name': 'ZUUL_PIPELINE'}},
+        {'description': 'Zuul provided key to link builds with Gerrit'
+         ' events (deprecated use ZUUL_UUID instead)',
+         'name': 'UUID'}},
     {'string':
-         {'description': 'Zuul provided project name',
-          'name': 'GERRIT_PROJECT'}},
+        {'description': 'Zuul pipeline triggering this job',
+         'name': 'ZUUL_PIPELINE'}},
     {'string':
-         {'description': 'Branch name of triggering project',
-          'name': 'ZUUL_PROJECT'}},
+        {'description': 'Zuul provided project name',
+         'name': 'GERRIT_PROJECT'}},
     {'string':
-         {'description': 'Zuul provided branch name',
-          'name': 'GERRIT_BRANCH'}},
+        {'description': 'Branch name of triggering project',
+         'name': 'ZUUL_PROJECT'}},
     {'string':
-         {'description': 'Branch name of triggering change',
-          'name': 'ZUUL_BRANCH'}},
+        {'description': 'Zuul provided branch name',
+         'name': 'GERRIT_BRANCH'}},
     {'string':
-         {'description': 'Zuul provided list of dependent changes to merge',
-          'name': 'GERRIT_CHANGES'}},
+        {'description': 'Branch name of triggering change',
+         'name': 'ZUUL_BRANCH'}},
     {'string':
-         {'description': 'List of dependent changes to merge',
-          'name': 'ZUUL_CHANGES'}},
+        {'description': 'Zuul provided list of dependent changes to merge',
+         'name': 'GERRIT_CHANGES'}},
     {'string':
-         {'description': 'Reference for the merged commit(s) to use',
-          'name': 'ZUUL_REF'}},
+        {'description': 'List of dependent changes to merge',
+         'name': 'ZUUL_CHANGES'}},
     {'string':
-         {'description': 'List of included changes',
-          'name': 'ZUUL_CHANGE_IDS'}},
+        {'description': 'Reference for the merged commit(s) to use',
+         'name': 'ZUUL_REF'}},
     {'string':
-         {'description': 'ID of triggering change',
-          'name': 'ZUUL_CHANGE'}},
+        {'description': 'The commit SHA1 at the head of ZUUL_REF',
+         'name': 'ZUUL_COMMIT'}},
     {'string':
-         {'description': 'Patchset of triggering change',
-          'name': 'ZUUL_PATCHSET'}},
-    ]
+        {'description': 'List of included changes',
+         'name': 'ZUUL_CHANGE_IDS'}},
+    {'string':
+        {'description': 'ID of triggering change',
+         'name': 'ZUUL_CHANGE'}},
+    {'string':
+        {'description': 'Patchset of triggering change',
+         'name': 'ZUUL_PATCHSET'}},
+]
 
 ZUUL_POST_PARAMETERS = [
     {'string':
-         {'description': 'Zuul provided key to link builds with Gerrit events',
-          'name': 'UUID'}},
+        {'description': 'Zuul provided key to link builds with Gerrit events',
+         'name': 'ZUUL_UUID'}},
     {'string':
-         {'description': 'Zuul pipeline triggering this job',
-          'name': 'ZUUL_PIPELINE'}},
+        {'description': 'Zuul provided key to link builds with Gerrit'
+         ' events (deprecated use ZUUL_UUID instead)',
+         'name': 'UUID'}},
     {'string':
-         {'description': 'Zuul provided project name',
-          'name': 'GERRIT_PROJECT'}},
+        {'description': 'Zuul pipeline triggering this job',
+         'name': 'ZUUL_PIPELINE'}},
     {'string':
-         {'description': 'Branch name of triggering project',
-          'name': 'ZUUL_PROJECT'}},
+        {'description': 'Zuul provided project name',
+         'name': 'GERRIT_PROJECT'}},
     {'string':
-         {'description': 'Zuul provided ref name',
-          'name': 'GERRIT_REFNAME'}},
+        {'description': 'Branch name of triggering project',
+         'name': 'ZUUL_PROJECT'}},
     {'string':
-         {'description': 'Name of updated reference triggering this job',
-          'name': 'ZUUL_REFNAME'}},
+        {'description': 'Zuul provided ref name',
+         'name': 'GERRIT_REFNAME'}},
     {'string':
-         {'description': 'Zuul provided old reference for ref-updated',
-          'name': 'GERRIT_OLDREV'}},
+        {'description': 'Name of updated reference triggering this job',
+         'name': 'ZUUL_REF'}},
     {'string':
-         {'description': 'Old SHA at this reference',
-          'name': 'ZUUL_OLDREV'}},
+        {'description': 'Name of updated reference triggering this job',
+         'name': 'ZUUL_REFNAME'}},
     {'string':
-         {'description': 'Zuul provided new reference for ref-updated',
-          'name': 'GERRIT_NEWREV'}},
+        {'description': 'Zuul provided old reference for ref-updated',
+         'name': 'GERRIT_OLDREV'}},
     {'string':
-         {'description': 'New SHA at this reference',
-          'name': 'ZUUL_NEWREV'}},
+        {'description': 'Old SHA at this reference',
+         'name': 'ZUUL_OLDREV'}},
     {'string':
-         {'description': 'Shortened new SHA at this reference',
-          'name': 'ZUUL_SHORT_NEWREV'}},
-    ]
+        {'description': 'Zuul provided new reference for ref-updated',
+         'name': 'GERRIT_NEWREV'}},
+    {'string':
+        {'description': 'New SHA at this reference',
+         'name': 'ZUUL_NEWREV'}},
+    {'string':
+        {'description': 'Shortened new SHA at this reference',
+         'name': 'ZUUL_SHORT_NEWREV'}},
+]
 
-ZUUL_NOTIFICATIONS = [
-    {'http':
-         {'url': 'http://127.0.0.1:8001/jenkins_endpoint'}}
-    ]
+DEFAULT_URL = 'http://127.0.0.1:8001/jenkins_endpoint'
 
 
 class Zuul(jenkins_jobs.modules.base.Base):
@@ -142,7 +161,16 @@ class Zuul(jenkins_jobs.modules.base.Base):
                 job['parameters'] = []
             if 'notifications' not in job:
                 job['notifications'] = []
-            job['notifications'].extend(ZUUL_NOTIFICATIONS)
+            # This isn't a good pattern, and somewhat violates the
+            # spirit of the global defaults, but Zuul is working on
+            # a better design that should obviate the need for most
+            # of this module, so this gets it doen with minimal
+            # intrusion to the rest of JJB.
+            if parser.data.get('defaults', {}).get('global'):
+                url = parser.data['defaults']['global'].get(
+                    'zuul-url', DEFAULT_URL)
+            notifications = [{'http': {'url': url}}]
+            job['notifications'].extend(notifications)
             if 'zuul' in job.get('triggers', []):
                 job['parameters'].extend(ZUUL_PARAMETERS)
                 job['triggers'].remove('zuul')

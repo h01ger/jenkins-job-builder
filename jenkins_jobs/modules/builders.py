@@ -83,7 +83,7 @@ def copyartifact(parser, xml_parent, data):
     t = XML.SubElement(xml_parent, 'hudson.plugins.copyartifact.CopyArtifact')
     XML.SubElement(t, 'projectName').text = data["project"]
     XML.SubElement(t, 'filter').text = data.get("filter", "")
-    XML.SubElement(t, 'target').text = data.get("project", "")
+    XML.SubElement(t, 'target').text = data.get("target", "")
 
 
 def ant(parser, xml_parent, data):
@@ -100,11 +100,14 @@ def ant(parser, xml_parent, data):
     of targets to build.
 
     :Parameter: space separated list of Ant targets
+    :arg str ant-name: the name of the ant installation,
+        defaults to 'default' (optional)
 
     Example to call two Ant targets::
 
         builders:
           - ant: "target1 target2"
+             ant-name: "Standard Ant"
 
     The build file would be whatever the Jenkins Ant Plugin is set to use
     per default (i.e build.xml in the workspace root).
@@ -113,6 +116,9 @@ def ant(parser, xml_parent, data):
 
     :arg str targets: the space separated list of ANT targets.
     :arg str buildfile: the path to the ANT build file.
+    :arg list properties: Passed to ant script using -Dkey=value (optional)
+    :arg str ant-name: the name of the ant installation,
+        defaults to 'default' (optional)
 
 
     Example specifying the build file too and several targets::
@@ -121,6 +127,10 @@ def ant(parser, xml_parent, data):
           - ant:
              targets: "debug test install"
              buildfile: "build.xml"
+             properties:
+                builddir: "/tmp/"
+                failonerror: true
+             ant-name: "Standard Ant"
 
     """
     ant = XML.SubElement(xml_parent, 'hudson.tasks.Ant')
@@ -135,6 +145,15 @@ def ant(parser, xml_parent, data):
         if setting == 'buildfile':
             buildfile = XML.SubElement(ant, 'buildFile')
             buildfile.text = value
+        if setting == 'properties':
+            properties = data['properties']
+            prop_string = ''
+            for prop, val in properties.items():
+                prop_string += "%s=%s\n" % (prop, val)
+            prop_element = XML.SubElement(ant, 'properties')
+            prop_element.text = prop_string
+
+    XML.SubElement(ant, 'antName').text = data.get('ant-name', 'default')
 
 
 def trigger_builds(parser, xml_parent, data):
@@ -147,6 +166,8 @@ def trigger_builds(parser, xml_parent, data):
     :arg str project: the Jenkins project to trigger
     :arg str predefined-parameters:
       key/value pairs to be passed to the job (optional)
+    :arg bool block: whether to wait for the triggered jobs
+      to finish or not (default false)
 
     Example::
 
@@ -155,24 +176,29 @@ def trigger_builds(parser, xml_parent, data):
             - project: "build_started"
               predefined-parameters:
                 FOO="bar"
+              block: true
 
     """
     tbuilder = XML.SubElement(xml_parent,
-                   'hudson.plugins.parameterizedtrigger.TriggerBuilder')
+                              'hudson.plugins.parameterizedtrigger.'
+                              'TriggerBuilder')
     configs = XML.SubElement(tbuilder, 'configs')
     for project_def in data:
         if 'project' not in project_def or project_def['project'] == '':
             logger.debug("No project specified - skipping trigger-build")
             continue
         tconfig = XML.SubElement(configs,
-            'hudson.plugins.parameterizedtrigger.BlockableBuildTriggerConfig')
+                                 'hudson.plugins.parameterizedtrigger.'
+                                 'BlockableBuildTriggerConfig')
         tconfigs = XML.SubElement(tconfig, 'configs')
         if(project_def.get('current-parameters')):
             XML.SubElement(tconfigs,
-                 'hudson.plugins.parameterizedtrigger.CurrentBuildParameters')
+                           'hudson.plugins.parameterizedtrigger.'
+                           'CurrentBuildParameters')
         if 'predefined-parameters' in project_def:
             params = XML.SubElement(tconfigs,
-              'hudson.plugins.parameterizedtrigger.PredefinedBuildParameters')
+                                    'hudson.plugins.parameterizedtrigger.'
+                                    'PredefinedBuildParameters')
             properties = XML.SubElement(params, 'properties')
             properties.text = project_def['predefined-parameters']
         if(len(list(tconfigs)) == 0):
@@ -187,6 +213,21 @@ def trigger_builds(parser, xml_parent, data):
         build_all_nodes_with_label = XML.SubElement(tconfig,
                                                     'buildAllNodesWithLabel')
         build_all_nodes_with_label.text = 'false'
+        block = project_def.get('block', False)
+        if(block):
+            block = XML.SubElement(tconfig, 'block')
+            bsft = XML.SubElement(block, 'buildStepFailureThreshold')
+            XML.SubElement(bsft, 'name').text = 'FAILURE'
+            XML.SubElement(bsft, 'ordinal').text = '2'
+            XML.SubElement(bsft, 'color').text = 'RED'
+            ut = XML.SubElement(block, 'unstableThreshold')
+            XML.SubElement(ut, 'name').text = 'UNSTABLE'
+            XML.SubElement(ut, 'ordinal').text = '1'
+            XML.SubElement(ut, 'color').text = 'Yellow'
+            ft = XML.SubElement(block, 'failureThreshold')
+            XML.SubElement(ft, 'name').text = 'FAILURE'
+            XML.SubElement(ft, 'ordinal').text = '2'
+            XML.SubElement(ft, 'color').text = 'RED'
     # If configs is empty, remove the entire tbuilder tree.
     if(len(configs) == 0):
         logger.debug("Pruning empty TriggerBuilder tree.")
@@ -208,7 +249,7 @@ def builders_from(parser, xml_parent, data):
             - project: "base-build"
     """
     pbs = XML.SubElement(xml_parent,
-        'hudson.plugins.templateproject.ProxyBuilder')
+                         'hudson.plugins.templateproject.ProxyBuilder')
     XML.SubElement(pbs, 'projectName').text = data
 
 
@@ -236,13 +277,121 @@ def inject(parser, xml_parent, data):
     XML.SubElement(info, 'propertiesContent').text = propcontent
 
 
+def artifact_resolver(parser, xml_parent, data):
+    """yaml: artifact-resolver
+    Allows one to resolve artifacts from a maven repository like nexus
+    (without having maven installed)
+    Requires the Jenkins `Repository Connector Plugin
+    <https://wiki.jenkins-ci.org/display/JENKINS/Repository+Connector+Plugin>`_
+
+    :arg bool fail-on-error: Whether to fail the build on error (default false)
+    :arg bool repository-logging: Enable repository logging (default false)
+    :arg str target-directory: Where to resolve artifacts to
+    :arg list artifacts: list of artifacts to resolve
+
+      :Artifact: * **group-id** (`str`) -- Group ID of the artifact
+                 * **artifact-id** (`str`) -- Artifact ID of the artifact
+                 * **version** (`str`) -- Version of the artifact
+                 * **classifier** (`str`) -- Classifier of the artifact
+                   (default '')
+                 * **extension** (`str`) -- Extension of the artifact
+                   (default 'jar')
+                 * **target-file-name** (`str`) -- What to name the artifact
+                   (default '')
+
+    Example::
+
+      builders:
+        - artifact-resolver:
+            fail-on-error: true
+            repository-logging: true
+            target-directory: foo
+            artifacts:
+              - group-id: commons-logging
+                artifact-id: commons-logging
+                version: 1.1
+                classifier: src
+                extension: jar
+                target-file-name: comm-log.jar
+              - group-id: commons-lang
+                artifact-id: commons-lang
+                version: 1.2
+    """
+    ar = XML.SubElement(xml_parent,
+                        'org.jvnet.hudson.plugins.repositoryconnector.'
+                        'ArtifactResolver')
+    XML.SubElement(ar, 'targetDirectory').text = data['target-directory']
+    artifacttop = XML.SubElement(ar, 'artifacts')
+    artifacts = data['artifacts']
+    for artifact in artifacts:
+        rcartifact = XML.SubElement(artifacttop,
+                                    'org.jvnet.hudson.plugins.'
+                                    'repositoryconnector.Artifact')
+        XML.SubElement(rcartifact, 'groupId').text = artifact['group-id']
+        XML.SubElement(rcartifact, 'artifactId').text = artifact['artifact-id']
+        XML.SubElement(rcartifact, 'classifier').text = artifact.get(
+            'classifier', '')
+        XML.SubElement(rcartifact, 'version').text = artifact['version']
+        XML.SubElement(rcartifact, 'extension').text = artifact.get(
+            'extension', 'jar')
+        XML.SubElement(rcartifact, 'targetFileName').text = artifact.get(
+            'target-file-name', '')
+    XML.SubElement(ar, 'failOnError').text = str(data.get(
+        'fail-on-error', False)).lower()
+    XML.SubElement(ar, 'enableRepoLogging').text = str(data.get(
+        'repository-logging', False)).lower()
+    XML.SubElement(ar, 'snapshotUpdatePolicy').text = 'never'
+    XML.SubElement(ar, 'releaseUpdatePolicy').text = 'never'
+    XML.SubElement(ar, 'snapshotChecksumPolicy').text = 'warn'
+    XML.SubElement(ar, 'releaseChecksumPolicy').text = 'warn'
+
+
+def gradle(parser, xml_parent, data):
+    """yaml: gradle
+    Execute gradle tasks.  Requires the Jenkins 'Gradle Plugin.
+    <https://wiki.jenkins-ci.org/display/JENKINS/Gradle+Plugin>`_
+
+    :arg str tasks: List of tasks to execute
+    :arg bool wrapper: use gradle wrapper (default false)
+    :arg bool executable: make gradlew executable (default false)
+
+    Example::
+
+      builders:
+        - gradle:
+            wrapper: true
+            executable: true
+            tasks: |
+                   init
+                   build
+                   tests
+    """
+    gradle = XML.SubElement(xml_parent, 'hudson.plugins.gradle.Gradle')
+    XML.SubElement(gradle, 'description').text = ''
+    XML.SubElement(gradle, 'switches').text = ''
+    XML.SubElement(gradle, 'tasks').text = data['tasks']
+    XML.SubElement(gradle, 'rootBuildScriptDir').text = ''
+    XML.SubElement(gradle, 'buildFile').text = ''
+    XML.SubElement(gradle, 'useWrapper').text = str(data.get(
+        'wrapper', False)).lower()
+    XML.SubElement(gradle, 'makeExecutable').text = str(data.get(
+        'executable', False)).lower()
+
+
 class Builders(jenkins_jobs.modules.base.Base):
     sequence = 60
 
     def gen_xml(self, parser, xml_parent, data):
+
         for alias in ['prebuilders', 'builders', 'postbuilders']:
             if alias in data:
                 builders = XML.SubElement(xml_parent, alias)
                 for builder in data[alias]:
                     self._dispatch('builder', 'builders',
                                    parser, builders, builder)
+
+        # Make sure freestyle projects always have a <builders> entry
+        # or Jenkins v1.472 (at least) will NPE.
+        project_type = data.get('project-type', 'freestyle')
+        if project_type in ('freestyle', 'matrix') and 'builders' not in data:
+            XML.SubElement(xml_parent, 'builders')

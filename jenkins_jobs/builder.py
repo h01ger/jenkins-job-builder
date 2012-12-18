@@ -179,8 +179,18 @@ class YamlParser(object):
             XML.SubElement(xml, 'disabled').text = 'true'
         else:
             XML.SubElement(xml, 'disabled').text = 'false'
-        XML.SubElement(xml, 'blockBuildWhenDownstreamBuilding').text = 'false'
-        XML.SubElement(xml, 'blockBuildWhenUpstreamBuilding').text = 'false'
+        if data.get('block-downstream'):
+            XML.SubElement(xml,
+                           'blockBuildWhenDownstreamBuilding').text = 'true'
+        else:
+            XML.SubElement(xml,
+                           'blockBuildWhenDownstreamBuilding').text = 'false'
+        if data.get('block-upstream'):
+            XML.SubElement(xml,
+                           'blockBuildWhenUpstreamBuilding').text = 'true'
+        else:
+            XML.SubElement(xml,
+                           'blockBuildWhenUpstreamBuilding').text = 'false'
         if data.get('concurrent'):
             XML.SubElement(xml, 'concurrentBuild').text = 'true'
         else:
@@ -236,7 +246,8 @@ class XmlJob(object):
 
 class CacheStorage(object):
     def __init__(self):
-        self.cachefilename = os.path.expanduser('~/.jenkins_jobs_cache.yml')
+        cache_dir = self.get_cache_dir()
+        self.cachefilename = os.path.join(cache_dir, 'jenkins_jobs_cache.yml')
         try:
             yfile = file(self.cachefilename, 'r')
         except IOError:
@@ -244,6 +255,18 @@ class CacheStorage(object):
             return
         self.data = yaml.load(yfile)
         yfile.close()
+
+    @staticmethod
+    def get_cache_dir():
+        home = os.path.expanduser('~')
+        if home == '~':
+            raise OSError('Could not locate home folder')
+        xdg_cache_home = os.environ.get('XDG_CACHE_HOME') or \
+            os.path.join(home, '.cache')
+        path = os.path.join(xdg_cache_home, 'jenkins_jobs')
+        if not os.path.isdir(path):
+            os.makedirs(path)
+        return path
 
     def set(self, job, md5):
         self.data[job] = md5
@@ -291,7 +314,7 @@ class Jenkins(object):
 
 class Builder(object):
     def __init__(self, jenkins_url, jenkins_user, jenkins_password,
-                      config=None):
+                 config=None):
         self.jenkins = Jenkins(jenkins_url, jenkins_user, jenkins_password)
         self.cache = CacheStorage()
         self.global_config = config

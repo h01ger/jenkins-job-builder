@@ -4,9 +4,9 @@ Configuration
 The job definitions for Jenkins Job Builder are kept in any number of
 YAML files, in whatever way you would like to organize them.  When you
 invoke ``jenkins-jobs`` you may specify either the path of a single
-YAML file, or a directory.  If you choose a directory, all of the
-.yaml (or .yml) files in that directory will be read, and all the jobs
-they define will be created or updated.
+YAML file, or a directory.  If you choose a directory, all of
+the .yaml (or .yml) files in that directory will be read, and all the
+jobs they define will be created or updated.
 
 Definitions
 -----------
@@ -33,6 +33,11 @@ later.  There are a few basic optional fields for a Job definition::
       name: job-name
       project-type: freestyle
       defaults: global
+      disabled: false
+      concurrent: true
+      quiet-period: 5
+      block-downstream: false
+      block-upstream: false
 
 **project-type**
   Defaults to "freestyle", but "maven" can also be specified.
@@ -44,6 +49,28 @@ later.  There are a few basic optional fields for a Job definition::
   configuration of individual jobs is necessary.  If some jobs
   should not use the ``global`` defaults, use this field to specify a
   different set of defaults.
+
+**disabled**
+  Boolean value to set whether or not this job should be disabled in
+  Jenkins. Defaults to ``false`` (job will be enabled).
+
+**concurrent**
+  Boolean value to set whether or not Jenkins can run this job
+  concurrently. Defaults to ``false``.
+
+**quiet-period**
+  Number of seconds to wait between consecutive runs of this job.
+  Defaults to ``0``.
+
+**block-downstream**
+  Boolean value to set whether or not this job must block while
+  downstream jobs are running. Downstream jobs are determined
+  transitively. Defaults to ``false``.
+
+**block-upstream**
+  Boolean value to set whether or not this job must block while
+  upstream jobs are running. Upstream jobs are determined
+  transitively. Defaults to ``false``.
 
 .. _job-template:
 
@@ -182,6 +209,56 @@ actions) in YAML that look like first-class Jenkins Job Builder
 actions.  Not every attribute supports Macros, check the documentation
 for the action before you try to use a Macro for it.
 
+Macros can take parameters, letting you define a generic macro and more
+specific ones without having to duplicate code::
+
+    # The 'add' macro takes a 'number' parameter and will creates a
+    # job which prints 'Adding ' followed by the 'number' parameter:
+    - builder:
+        name: add
+        builders:
+         - shell: "echo Adding {number}"
+
+    # A specialized macro 'addtwo' reusing the 'add' macro but with
+    # a 'number' parameter hardcoded to 'two':
+    - builder:
+        name: addtwo
+        builders:
+         - add:
+            number: "two"
+
+    # Glue to have Jenkins Job Builder to expand this YAML example:
+    - job:
+        name: "testingjob"
+        builders:
+         # The specialized macro:
+         - addtwo
+         # Generic macro call with a parameter
+         - add:
+            number: "ZERO"
+         # Generic macro called without a parameter. Never do this!
+         # See below for the resulting wrong output :(
+         - add
+
+Then ``<builders />`` section of the generated job show up as::
+
+  <builders>
+    <hudson.tasks.Shell>
+      <command>echo Adding two</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>echo Adding ZERO</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>echo Adding {number}</command>
+    </hudson.tasks.Shell>
+  </builders>
+
+As you can see, the specialized macro ``addtwo`` reused the definition from
+the generic macro ``add``.  Whenever you forget a parameter from a macro,
+it will not be expanded and left as is, which will most probably cause havoc in
+your Jenkins builds.
+
 Defaults
 ^^^^^^^^
 
@@ -209,6 +286,7 @@ The bulk of the job definitions come from the following modules.
 
    project_freestyle
    project_maven
+   project_matrix
    general
    builders
    hipchat

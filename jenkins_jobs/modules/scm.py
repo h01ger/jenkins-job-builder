@@ -44,7 +44,10 @@ def git(self, xml_parent, data):
     <https://wiki.jenkins-ci.org/display/JENKINS/Git+Plugin>`_
 
     :arg str url: URL of the git repository
+    :arg str refspec: refspec to fetch
     :arg list(str) branches: list of branch specifiers to build
+    :arg str basedir: location relative to the workspace root to clone to
+             (default: workspace)
     :arg bool skip-tag: Skip tagging
     :arg bool prune: Prune remote branches
     :arg bool clean: Clean after checkout
@@ -54,6 +57,19 @@ def git(self, xml_parent, data):
     :arg bool use-author: Use author rather than committer in Jenkin's build
       changeset
     :arg bool wipe-workspace: Wipe out workspace before build
+    :arg str browser: what repository browser to use (default '(Auto)')
+    :arg str browser-url: url for the repository browser
+
+    :browser values:
+        :githubweb:
+        :fisheye:
+        :bitbucketweb:
+        :gitblit:
+        :gitlab:
+        :gitoriousweb:
+        :gitweb:
+        :redmineweb:
+        :viewgit:
 
     Example::
 
@@ -63,6 +79,8 @@ def git(self, xml_parent, data):
           branches:
             - master
             - stable
+          browser: githubweb
+          browser-url: http://github.com/foo/example.git
     """
 
     # XXX somebody should write the docs for those with option name =
@@ -81,7 +99,7 @@ def git(self, xml_parent, data):
             'class': 'hudson.plugins.git.util.DefaultBuildChooser'}),
         (None, 'gitTool', "Default"),
         (None, 'submoduleCfg', '', {'class': 'list'}),
-        (None, 'relativeTargetDir', ''),
+        ('basedir', 'relativeTargetDir', ''),
         (None, 'reference', ''),
         (None, 'excludedRegions', ''),
         (None, 'excludedUsers', ''),
@@ -89,7 +107,7 @@ def git(self, xml_parent, data):
         (None, 'gitConfigEmail', ''),
         ('skip-tag', 'skipTag', False),
         (None, 'scmName', ''),
-        ]
+    ]
 
     scm = XML.SubElement(xml_parent,
                          'scm', {'class': 'hudson.plugins.git.GitSCM'})
@@ -97,8 +115,11 @@ def git(self, xml_parent, data):
     user = XML.SubElement(scm, 'userRemoteConfigs')
     huser = XML.SubElement(user, 'hudson.plugins.git.UserRemoteConfig')
     XML.SubElement(huser, 'name').text = 'origin'
-    XML.SubElement(huser, 'refspec').text = \
-        '+refs/heads/*:refs/remotes/origin/*'
+    if 'refspec' in data:
+        refspec = data['refspec']
+    else:
+        refspec = '+refs/heads/*:refs/remotes/origin/*'
+    XML.SubElement(huser, 'refspec').text = refspec
     XML.SubElement(huser, 'url').text = data['url']
     xml_branches = XML.SubElement(scm, 'branches')
     branches = data.get('branches', ['**'])
@@ -117,6 +138,28 @@ def git(self, xml_parent, data):
             xe.text = str(val).lower()
         else:
             xe.text = val
+    browser = data.get('browser', 'auto')
+    browserdict = {'githubweb': 'GithubWeb',
+                   'fisheye': 'FisheyeGitRepositoryBrowser',
+                   'bitbucketweb': 'BitbucketWeb',
+                   'cgit': 'CGit',
+                   'gitblit': 'GitBlitRepositoryBrowser',
+                   'gitlab': 'GitLab',
+                   'gitoriousweb': 'GitoriousWeb',
+                   'gitweb': 'GitWeb',
+                   'redmineweb': 'RedmineWeb',
+                   'viewgit': 'ViewGitWeb',
+                   'auto': 'auto'}
+    if browser not in browserdict:
+        raise Exception("Browser entered is not valid must be one of: " +
+                        "githubweb, fisheye, bitbucketweb, cgit, gitblit, " +
+                        "gitlab, gitoriousweb, gitweb, redmineweb, viewgit, " +
+                        "or auto")
+    if browser != 'auto':
+        bc = XML.SubElement(scm, 'browser', {'class':
+                            'hudson.plugins.git.browser.' +
+                            browserdict[browser]})
+        XML.SubElement(bc, 'url').text = data['browser-url']
 
 
 def svn(self, xml_parent, data):
@@ -125,8 +168,14 @@ def svn(self, xml_parent, data):
 
     :arg str url: URL of the svn repository
     :arg str basedir: location relative to the workspace root to checkout to
+      (default '.')
     :arg str workspaceupdater: optional argument to specify
-         how to update the workspace
+      how to update the workspace (default wipeworkspace)
+    :arg list repos: list of repositories to checkout (optional)
+
+      :Repo: * **url** (`str`) -- URL for the repository
+             * **basedir** (`str`) -- Location relative to the workspace
+                                      root to checkout to (default '.')
 
     :workspaceupdater values:
              :wipeworkspace: - deletes the workspace before checking out
@@ -138,22 +187,34 @@ def svn(self, xml_parent, data):
 
       scm:
         - svn:
-           url: http://svn.example.com/repo
-           basedir: .
            workspaceupdater: update
+           repos:
+             - url: http://svn.example.com/repo
+               basedir: .
+             - url: http://svn.example.com/repo2
+               basedir: repo2
     """
-
     scm = XML.SubElement(xml_parent, 'scm', {'class':
-              'hudson.scm.SubversionSCM'})
+                         'hudson.scm.SubversionSCM'})
     if 'viewvc-url' in data:
         browser = XML.SubElement(scm, 'browser', {'class':
               'hudson.scm.browsers.ViewSVN'})
         XML.SubElement(browser, 'url').text = data['viewvc-url']
     locations = XML.SubElement(scm, 'locations')
-    module = XML.SubElement(locations,
-              'hudson.scm.SubversionSCM_-ModuleLocation')
-    XML.SubElement(module, 'remote').text = data['url']
-    XML.SubElement(module, 'local').text = data['basedir']
+    if 'repos' in data:
+        repos = data['repos']
+        for repo in repos:
+            module = XML.SubElement(locations,
+                                    'hudson.scm.SubversionSCM_-ModuleLocation')
+            XML.SubElement(module, 'remote').text = repo['url']
+            XML.SubElement(module, 'local').text = repo.get('basedir', '.')
+    elif 'url' in data:
+        module = XML.SubElement(locations,
+                                'hudson.scm.SubversionSCM_-ModuleLocation')
+        XML.SubElement(module, 'remote').text = data['url']
+        XML.SubElement(module, 'local').text = data.get('basedir', '.')
+    else:
+        raise Exception("A top level url or repos list must exist")
     updater = data.get('workspaceupdater', 'wipeworkspace')
     if updater == 'wipeworkspace':
         updaterclass = 'CheckoutUpdater'
@@ -164,7 +225,7 @@ def svn(self, xml_parent, data):
     elif updater == 'update':
         updaterclass = 'UpdateUpdater'
     XML.SubElement(scm, 'workspaceUpdater', {'class':
-                'hudson.scm.subversion.' + updaterclass})
+                   'hudson.scm.subversion.' + updaterclass})
     #if 'includedRegions' in data:
     XML.SubElement(scm, 'includedRegions').text = data['includedRegions']
     XML.SubElement(scm, 'excludedRegions').text = data['excludedRegions']

@@ -111,15 +111,18 @@ def trigger_parameterized_builds(parser, xml_parent, data):
             project: other_job
     """
     tbuilder = XML.SubElement(xml_parent,
-        'hudson.plugins.parameterizedtrigger.BuildTrigger')
+                              'hudson.plugins.parameterizedtrigger.'
+                              'BuildTrigger')
     configs = XML.SubElement(tbuilder, 'configs')
     for project_def in data:
         tconfig = XML.SubElement(configs,
-            'hudson.plugins.parameterizedtrigger.BuildTriggerConfig')
+                                 'hudson.plugins.parameterizedtrigger.'
+                                 'BuildTriggerConfig')
         tconfigs = XML.SubElement(tconfig, 'configs')
         if 'predefined-parameters' in project_def:
             params = XML.SubElement(tconfigs,
-              'hudson.plugins.parameterizedtrigger.PredefinedBuildParameters')
+                                    'hudson.plugins.parameterizedtrigger.'
+                                    'PredefinedBuildParameters')
             properties = XML.SubElement(params, 'properties')
             properties.text = project_def['predefined-parameters']
         else:
@@ -151,16 +154,16 @@ def trigger(parser, xml_parent, data):
         'SUCCESS': {
             'ordinal': '0',
             'color': 'BLUE'
-            },
+        },
         'UNSTABLE': {
             'ordinal': '1',
             'color': 'YELLOW'
-            },
+        },
         'FAILURE': {
             'ordinal': '2',
             'color': 'RED'
-            }
         }
+    }
 
     tconfig = XML.SubElement(xml_parent, 'hudson.tasks.BuildTrigger')
     childProjects = XML.SubElement(tconfig, 'childProjects')
@@ -196,8 +199,8 @@ def coverage(parser, xml_parent, data):
     XML.SubElement(cobertura, 'onlyStable').text = 'false'
     healthy = XML.SubElement(cobertura, 'healthyTarget')
     targets = XML.SubElement(healthy, 'targets', {
-            'class': 'enum-map',
-            'enum-type': 'hudson.plugins.cobertura.targets.CoverageMetric'})
+        'class': 'enum-map',
+        'enum-type': 'hudson.plugins.cobertura.targets.CoverageMetric'})
     entry = XML.SubElement(targets, 'entry')
     XML.SubElement(entry, 'hudson.plugins.cobertura.targets.CoverageMetric'
                    ).text = 'CONDITIONAL'
@@ -212,8 +215,8 @@ def coverage(parser, xml_parent, data):
     XML.SubElement(entry, 'int').text = '80'
     unhealthy = XML.SubElement(cobertura, 'unhealthyTarget')
     targets = XML.SubElement(unhealthy, 'targets', {
-            'class': 'enum-map',
-            'enum-type': 'hudson.plugins.cobertura.targets.CoverageMetric'})
+        'class': 'enum-map',
+        'enum-type': 'hudson.plugins.cobertura.targets.CoverageMetric'})
     entry = XML.SubElement(targets, 'entry')
     XML.SubElement(entry, 'hudson.plugins.cobertura.targets.CoverageMetric'
                    ).text = 'CONDITIONAL'
@@ -228,8 +231,8 @@ def coverage(parser, xml_parent, data):
     XML.SubElement(entry, 'int').text = '0'
     failing = XML.SubElement(cobertura, 'failingTarget')
     targets = XML.SubElement(failing, 'targets', {
-            'class': 'enum-map',
-            'enum-type': 'hudson.plugins.cobertura.targets.CoverageMetric'})
+        'class': 'enum-map',
+        'enum-type': 'hudson.plugins.cobertura.targets.CoverageMetric'})
     entry = XML.SubElement(targets, 'entry')
     XML.SubElement(entry, 'hudson.plugins.cobertura.targets.CoverageMetric'
                    ).text = 'CONDITIONAL'
@@ -269,7 +272,8 @@ def ftp(parser, xml_parent, data):
             excludes: '**/*.excludedfiletype'
     """
     outer_ftp = XML.SubElement(xml_parent,
-        'jenkins.plugins.publish__over__ftp.BapFtpPublisherPlugin')
+                               'jenkins.plugins.publish__over__ftp.'
+                               'BapFtpPublisherPlugin')
     XML.SubElement(outer_ftp, 'consolePrefix').text = 'FTP: '
     delegate = XML.SubElement(outer_ftp, 'delegate')
     publishers = XML.SubElement(delegate, 'publishers')
@@ -280,7 +284,8 @@ def ftp(parser, xml_parent, data):
 
     transfers = XML.SubElement(ftp, 'transfers')
     ftp_transfers = XML.SubElement(transfers,
-        'jenkins.plugins.publish__over__ftp.BapFtpTransfer')
+                                   'jenkins.plugins.publish__over__ftp.'
+                                   'BapFtpTransfer')
     XML.SubElement(ftp_transfers, 'remoteDirectory').text = data['target']
     XML.SubElement(ftp_transfers, 'sourceFiles').text = data['source']
     XML.SubElement(ftp_transfers, 'excludes').text = data['excludes']
@@ -296,8 +301,10 @@ def ftp(parser, xml_parent, data):
     XML.SubElement(delegate, 'failOnError').text = 'false'
     XML.SubElement(delegate, 'alwaysPublishFromMaster').text = 'false'
     XML.SubElement(delegate, 'hostConfigurationAccess',
-        {'class': 'jenkins.plugins.publish_over_ftp.BapFtpPublisherPlugin',
-         'reference': '../..'})
+                   {'class':
+                       'jenkins.plugins.publish_over_ftp.'
+                       'BapFtpPublisherPlugin',
+                    'reference': '../..'})
 
 
 def junit(parser, xml_parent, data):
@@ -326,7 +333,7 @@ def xunit(parser, xml_parent, data):
 
     :arg str thresholdmode: whether thresholds represents an absolute \
     number of tests or a percentage. Either 'number' or 'percent', will \
-    default to 'number' if ommitted.
+    default to 'number' if omitted.
 
     :arg dict thresholds: list containing the thresholds for both \
     'failed' and 'skipped' tests. Each entry should in turn have a \
@@ -382,20 +389,20 @@ def xunit(parser, xml_parent, data):
 
     # Map our internal types to the XML element names used by Jenkins plugin
     types_to_plugin_types = {
-            'aunit': 'AUnitJunitHudsonTestType',
-            'boosttest': 'AUnitJunitHudsonTestType',
-            'checktype': 'CheckType',
-            'cpptest': 'CppTestJunitHudsonTestType',
-            'cppunit': 'CppUnitJunitHudsonTestType',
-            'fpcunit': 'FPCUnitJunitHudsonTestType',
-            'junit': 'JUnitType',
-            'mstest': 'MSTestJunitHudsonTestType',
-            'nunit': 'NUnitJunitHudsonTestType',
-            'phpunit': 'PHPUnitJunitHudsonTestType',
-            'tusar': 'TUSARJunitHudsonTestType',
-            'unittest': 'UnitTestJunitHudsonTestType',
-            'valgrind': 'ValgrindJunitHudsonTestType',
-            # FIXME should implement the 'custom' type
+        'aunit': 'AUnitJunitHudsonTestType',
+        'boosttest': 'AUnitJunitHudsonTestType',
+        'checktype': 'CheckType',
+        'cpptest': 'CppTestJunitHudsonTestType',
+        'cppunit': 'CppUnitJunitHudsonTestType',
+        'fpcunit': 'FPCUnitJunitHudsonTestType',
+        'junit': 'JUnitType',
+        'mstest': 'MSTestJunitHudsonTestType',
+        'nunit': 'NUnitJunitHudsonTestType',
+        'phpunit': 'PHPUnitJunitHudsonTestType',
+        'tusar': 'TUSARJunitHudsonTestType',
+        'unittest': 'UnitTestJunitHudsonTestType',
+        'valgrind': 'ValgrindJunitHudsonTestType',
+        # FIXME should implement the 'custom' type
     }
     implemented_types = types_to_plugin_types.keys()  # shortcut
 
@@ -406,7 +413,7 @@ def xunit(parser, xml_parent, data):
         type_name = configured_type.keys()[0]
         if type_name not in implemented_types:
             logger.warn("Requested xUnit type '%s' is not yet supported" %
-                    type_name)
+                        type_name)
         else:
             # Append for generation
             supported_types.append(configured_type)
@@ -416,11 +423,11 @@ def xunit(parser, xml_parent, data):
         framework_name = supported_type.keys()[0]
         xmltypes = XML.SubElement(xunit, 'types')
         xmlframework = XML.SubElement(xmltypes,
-            types_to_plugin_types[framework_name])
+                                      types_to_plugin_types[framework_name])
 
         XML.SubElement(xmlframework, 'pattern').text = \
             supported_type[framework_name].get('pattern', '')
-        XML.SubElement(xmlframework, 'failedIfNotNew').text = \
+        XML.SubElement(xmlframework, 'failIfNotNew').text = \
             str(supported_type[framework_name].get(
                 'requireupdate', 'true')).lower()
         XML.SubElement(xmlframework, 'deleteOutputFiles').text = \
@@ -435,15 +442,15 @@ def xunit(parser, xml_parent, data):
         for t in data['thresholds']:
             if not ('failed' in t or 'skipped' in t):
                 logger.warn(
-                     "Unrecognized threshold, should be 'failed' or 'skipped'")
+                    "Unrecognized threshold, should be 'failed' or 'skipped'")
                 continue
             elname = "org.jenkinsci.plugins.xunit.threshold.%sThreshold" \
-                    % t.keys()[0].title()
+                % t.keys()[0].title()
             el = XML.SubElement(xmlthresholds, elname)
             for threshold_name, threshold_value in t.values()[0].items():
                 # Normalize and craft the element name for this threshold
                 elname = "%sThreshold" % threshold_name.lower().replace(
-                        'new', 'New')
+                    'new', 'New')
                 XML.SubElement(el, elname).text = threshold_value
 
     # Whether to use percent of exact number of tests.
@@ -510,7 +517,8 @@ def violations(parser, xml_parent, data):
               pattern: '**/pep8.txt'
     """
     violations = XML.SubElement(xml_parent,
-                    'hudson.plugins.violations.ViolationsPublisher')
+                                'hudson.plugins.violations.'
+                                'ViolationsPublisher')
     config = XML.SubElement(violations, 'config')
     suppressions = XML.SubElement(config, 'suppressions',
                                   {'class': 'tree-set'})
@@ -612,8 +620,8 @@ def pipeline(parser, xml_parent, data):
     """
     if data != '':
         pippub = XML.SubElement(xml_parent,
-                            'au.com.centrumsystems.hudson.plugin.'
-                            'buildpipeline.trigger.BuildPipelineTrigger')
+                                'au.com.centrumsystems.hudson.plugin.'
+                                'buildpipeline.trigger.BuildPipelineTrigger')
         XML.SubElement(pippub, 'downstreamProjectNames').text = data
 
 
@@ -661,6 +669,306 @@ def claimbuild(parser, xml_parent, data):
     """
 
     XML.SubElement(xml_parent, 'hudson.plugins.claim.ClaimPublisher')
+
+
+def base_email_ext(parser, xml_parent, data, ttype):
+    trigger = XML.SubElement(xml_parent,
+                             'hudson.plugins.emailext.plugins.trigger.'
+                             + ttype)
+    email = XML.SubElement(trigger, 'email')
+    XML.SubElement(email, 'recipientList').text = ''
+    XML.SubElement(email, 'subject').text = '$PROJECT_DEFAULT_SUBJECT'
+    XML.SubElement(email, 'body').text = '$PROJECT_DEFAULT_CONTENT'
+    XML.SubElement(email, 'sendToDevelopers').text = 'false'
+    XML.SubElement(email, 'sendToRequester').text = 'false'
+    XML.SubElement(email, 'includeCulprits').text = 'false'
+    XML.SubElement(email, 'sendToRecipientList').text = 'true'
+
+
+def email_ext(parser, xml_parent, data):
+    """yaml: email-ext
+    Extend Jenkin's built in email notification
+    Requires the Jenkins `Email-ext Plugin.
+    <https://wiki.jenkins-ci.org/display/JENKINS/Email-ext+plugin>`_
+
+    :arg str recipients: Comma separated list of emails
+    :arg str subject: Subject for the email, can include variables like
+        ${BUILD_NUMBER} or even groovy or javascript code
+    :arg str body: Content for the body of the email, can include variables
+        like ${BUILD_NUMBER}, but the real magic is using groovy or
+        javascript to hook into the Jenkins API itself
+    :arg bool unstable: Send an email for an unstable result (default false)
+    :arg bool first-failure: Send an email for just the first failure
+        (default false)
+    :arg bool not-built: Send an email if not built (default false)
+    :arg bool aborted: Send an email if the build is aborted (default false)
+    :arg bool regression: Send an email if there is a regression
+        (default false)
+    :arg bool failure: Send an email if the build fails (default false)
+    :arg bool improvement: Send an email if the build improves (default false)
+    :arg bool still-failing: Send an email if the build is still failing
+        (default false)
+    :arg bool success: Send an email for a successful build (default false)
+    :arg bool fixed: Send an email if the build is fixed (default false)
+    :arg bool still-unstable: Send an email if the build is still unstable
+        (default false)
+    :arg bool pre-build: Send an email before the build (default false)
+
+    Example::
+
+      publishers:
+        - email-ext:
+            recipients: foo@example.com, bar@example.com
+            subject: Subject for Build ${BUILD_NUMBER}
+            body: The build has finished
+            unstable: true
+            first-failure: true
+            not-built: true
+            aborted: true
+            regression: true
+            failure: true
+            improvement: true
+            still-failing: true
+            success: true
+            fixed: true
+            still-unstable: true
+            pre-build: true
+    """
+    emailext = XML.SubElement(xml_parent,
+                              'hudson.plugins.emailext.ExtendedEmailPublisher')
+    XML.SubElement(emailext, 'recipientList').text = data['recipients']
+    ctrigger = XML.SubElement(emailext, 'configuredTriggers')
+    if data.get('unstable', False):
+        base_email_ext(parser, ctrigger, data, 'UnstableTrigger')
+    if data.get('first-failure', False):
+        base_email_ext(parser, ctrigger, data, 'FirstFailureTrigger')
+    if data.get('not-built', False):
+        base_email_ext(parser, ctrigger, data, 'NotBuiltTrigger')
+    if data.get('aborted', False):
+        base_email_ext(parser, ctrigger, data, 'AbortedTrigger')
+    if data.get('regression', False):
+        base_email_ext(parser, ctrigger, data, 'RegressionTrigger')
+    if data.get('failure', False):
+        base_email_ext(parser, ctrigger, data, 'FailureTrigger')
+    if data.get('improvement', False):
+        base_email_ext(parser, ctrigger, data, 'ImprovementTrigger')
+    if data.get('still-failing', False):
+        base_email_ext(parser, ctrigger, data, 'StillFailingTrigger')
+    if data.get('success', False):
+        base_email_ext(parser, ctrigger, data, 'SuccessTrigger')
+    if data.get('fixed', False):
+        base_email_ext(parser, ctrigger, data, 'FixedTrigger')
+    if data.get('still-unstable', False):
+        base_email_ext(parser, ctrigger, data, 'StillUnstableTrigger')
+    if data.get('pre-build', False):
+        base_email_ext(parser, ctrigger, data, 'PreBuildTrigger')
+    XML.SubElement(emailext, 'contentType').text = 'default'
+    XML.SubElement(emailext, 'defaultSubject').text = data.get('subject', '')
+    XML.SubElement(emailext, 'defaultContent').text = data.get('body', '')
+    XML.SubElement(emailext, 'attachmentsPattern').text = ''
+    XML.SubElement(emailext, 'presendScript').text = ''
+
+
+def fingerprint(parser, xml_parent, data):
+    """yaml: fingerprint
+    Fingerprint files to track them across builds
+
+    :arg str files: files to fingerprint, follows the @includes of Ant fileset
+        (default is blank)
+    :arg bool record-artifacts: fingerprint all archived artifacts
+        (default false)
+
+    Example::
+
+      publishers:
+        - fingerprint:
+            files: builddir/test*.xml
+            record-artifacts: false
+    """
+    finger = XML.SubElement(xml_parent, 'hudson.tasks.Fingerprinter')
+    XML.SubElement(finger, 'targets').text = data.get('files', '')
+    XML.SubElement(finger, 'recordBuildArtifacts').text = str(data.get(
+        'record-artifacts', False)).lower()
+
+
+def aggregate_tests(parser, xml_parent, data):
+    """yaml: aggregate-tests
+    Aggregate downstream test results
+
+    :arg bool include-failed-builds: whether to include failed builds
+
+    Example::
+
+      publishers:
+        - aggregate-tests:
+            include-failed-builds: true
+    """
+    agg = XML.SubElement(xml_parent,
+                         'hudson.tasks.test.AggregatedTestResultPublisher')
+    XML.SubElement(agg, 'includeFailedBuilds').text = str(data.get(
+        'include-failed-builds', False)).lower()
+
+
+def cppcheck(parser, xml_parent, data):
+    """yaml: cppcheck
+    Cppcheck result publisher
+    Requires the Jenkins `Cppcheck Plugin.
+    <https://wiki.jenkins-ci.org/display/JENKINS/Cppcheck+Plugin>`_
+
+    :arg str pattern: file pattern for cppcheck xml report
+
+    for more optional parameters see the example
+
+    Example::
+
+      publishers:
+        - cppcheck:
+            pattern: "**/cppcheck.xml"
+            # the rest is optional
+            # build status (new) error count thresholds
+            thresholds:
+              unstable: 5
+              new-unstable: 5
+              failure: 7
+              new-failure: 3
+              # severities which count towards the threshold, default all true
+              severity:
+                error: true
+                warning: true
+                information: false
+            graph:
+              xysize: [500, 200]
+              # which errors to display, default only sum
+              display:
+                sum: false
+                error: true
+    """
+    cppextbase = XML.SubElement(xml_parent,
+                                'org.jenkinsci.plugins.cppcheck.'
+                                'CppcheckPublisher')
+    cppext = XML.SubElement(cppextbase, 'cppcheckConfig')
+    XML.SubElement(cppext, 'pattern').text = data['pattern']
+    XML.SubElement(cppext, 'ignoreBlankFiles').text = \
+        str(data.get('ignoreblankfiles', 'false')).lower()
+
+    csev = XML.SubElement(cppext, 'configSeverityEvaluation')
+    thrsh = data.get('thresholds', {})
+    XML.SubElement(csev, 'threshold').text = str(thrsh.get('unstable', ''))
+    XML.SubElement(csev, 'newThreshold').text = \
+        str(thrsh.get('new-unstable', ''))
+    XML.SubElement(csev, 'failureThreshold').text = \
+        str(thrsh.get('failure', ''))
+    XML.SubElement(csev, 'newFailureThreshold').text = \
+        str(thrsh.get('new-failure', ''))
+    XML.SubElement(csev, 'healthy').text = str(thrsh.get('healthy', ''))
+    XML.SubElement(csev, 'unHealthy').text = str(thrsh.get('unhealthy', ''))
+
+    sev = thrsh.get('severity', {})
+    XML.SubElement(csev, 'severityError').text = \
+        str(sev.get('error', 'true')).lower()
+    XML.SubElement(csev, 'severityWarning').text = \
+        str(sev.get('warning', 'true')).lower()
+    XML.SubElement(csev, 'severityStyle').text = \
+        str(sev.get('style', 'true')).lower()
+    XML.SubElement(csev, 'severityPerformance').text = \
+        str(sev.get('performance', 'true')).lower()
+    XML.SubElement(csev, 'severityInformation').text = \
+        str(sev.get('information', 'true')).lower()
+
+    graph = data.get('graph', {})
+    cgraph = XML.SubElement(cppext, 'configGraph')
+    x, y = graph.get('xysize', [500, 200])
+    XML.SubElement(cgraph, 'xSize').text = str(x)
+    XML.SubElement(cgraph, 'ySize').text = str(y)
+    gdisplay = graph.get('display', {})
+    XML.SubElement(cgraph, 'displayAllErrors').text = \
+        str(gdisplay.get('sum', 'true')).lower()
+    XML.SubElement(cgraph, 'displayErrorSeverity').text = \
+        str(gdisplay.get('error', 'false')).lower()
+    XML.SubElement(cgraph, 'displayWarningSeverity').text = \
+        str(gdisplay.get('warning', 'false')).lower()
+    XML.SubElement(cgraph, 'displayStyleSeverity').text = \
+        str(gdisplay.get('style', 'false')).lower()
+    XML.SubElement(cgraph, 'displayPerformanceSeverity').text = \
+        str(gdisplay.get('performance', 'false')).lower()
+    XML.SubElement(cgraph, 'displayInformationSeverity').text = \
+        str(gdisplay.get('information', 'false')).lower()
+
+
+def logparser(parser, xml_parent, data):
+    """yaml: logparser
+    Requires the Jenkins `Log Parser Plugin.
+    <https://wiki.jenkins-ci.org/display/JENKINS/Log+Parser+Plugin>`_
+
+    :arg str parse-rules: full path to parse rules
+    :arg bool unstable-on-warning: mark build unstable on warning
+    :arg bool fail-on-error: mark build failed on error
+
+    Example::
+      publishers:
+        - logparser:
+            parse-rules: "/path/to/parserules"
+            unstable-on-warning: true
+            fail-on-error: true
+    """
+
+    clog = XML.SubElement(xml_parent,
+                          'hudson.plugins.logparser.LogParserPublisher')
+    XML.SubElement(clog, 'unstableOnWarning').text = \
+        str(data.get('unstable-on-warning', 'false')).lower()
+    XML.SubElement(clog, 'failBuildOnError').text = \
+        str(data.get('fail-on-error', 'false')).lower()
+    # v1.08: this must be the full path, the name of the rules is not enough
+    XML.SubElement(clog, 'parsingRulesPath').text = data.get('parse-rules', '')
+
+
+def copy_to_master(parser, xml_parent, data):
+    """yaml: copy-to-master
+    Copy files to master from slave
+    Requires the Jenkins `Copy To Slave Plugin.
+    <https://wiki.jenkins-ci.org/display/JENKINS/Copy+To+Slave+Plugin>`_
+
+    :arg list includes: list of file patterns to copy
+    :arg list excludes: list of file patterns to exclude
+    :arg string destination: absolute path into which the files will be copied.
+                             If left blank they will be copied into the
+                             workspace of the current job
+
+    Example::
+
+      publishers:
+        - copy-to-master:
+            includes:
+              - file1
+              - file2*.txt
+            excludes:
+              - file2bad.txt
+    """
+    p = 'com.michelin.cio.hudson.plugins.copytoslave.CopyToMasterNotifier'
+    cm = XML.SubElement(xml_parent, p)
+
+    XML.SubElement(cm, 'includes').text = ','.join(data.get('includes', ['']))
+    XML.SubElement(cm, 'excludes').text = ','.join(data.get('excludes', ['']))
+
+    XML.SubElement(cm, 'destinationFolder').text = \
+        data.get('destination', '')
+
+    if data.get('destination', ''):
+        XML.SubElement(cm, 'overrideDestinationFolder').text = 'true'
+
+
+def jira(parser, xml_parent, data):
+    """yaml: jira
+    Update relevant JIRA issues
+    Requires the Jenkins `JIRA Plugin
+    <https://wiki.jenkins-ci.org/display/JENKINS/JIRA+Plugin>`_
+
+    Example::
+
+      publishers:
+        - jira
+    """
+    XML.SubElement(xml_parent, 'hudson.plugins.jira.JiraIssueUpdater')
 
 
 class Publishers(jenkins_jobs.modules.base.Base):
