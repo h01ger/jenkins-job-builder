@@ -40,29 +40,6 @@ import jenkins_jobs.modules.base
 import logging
 
 
-def logparser(parser, xml_parent, data):
-    """yaml: logparser
-    Console output (build log) parsing
-
-    :arg str rulespath: path specifier for logparsing rules
-    :arg bool unstable_on_warning: jaj
-    :arg bool fail_on_error: jaja
-
-    Example::
-
-      publishers:
-        - logparser:
-            rulespath: /srv/jenkins/logparse/debian.rules
-    """
-    logparser = XML.SubElement(xml_parent, 'hudson.plugins.logparser.LogParserPublisher')
-    rulespath = XML.SubElement(logparser, 'parsingRulesPath')
-    rulespath.text = data['rulespath']
-    unstable_on_warning = XML.SubElement(logparser, 'unstableOnWarning')
-    unstable_on_warning.text = data['unstable_on_warning']
-    fail_on_error = XML.SubElement(logparser, 'failBuildOnError')
-    fail_on_error.text = data['fail_on_error']
-
-
 def archive(parser, xml_parent, data):
     """yaml: archive
     Archive build artifacts
