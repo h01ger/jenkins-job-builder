@@ -92,7 +92,6 @@ setuptools.setup(
             'http=jenkins_jobs.modules.notifications:http_endpoint',
         ],
         'jenkins_jobs.publishers': [
-            'logparser=jenkins_jobs.modules.publishers:logparser',
             'archive=jenkins_jobs.modules.publishers:archive',
             'trigger-parameterized-builds='
             'jenkins_jobs.modules.publishers:trigger_parameterized_builds',
