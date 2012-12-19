@@ -93,6 +93,7 @@ setuptools.setup(
         ],
         'jenkins_jobs.publishers': [
             'archive=jenkins_jobs.modules.publishers:archive',
+            'htmlpublisher=jenkins_jobs.modules.publishers:htmlpublisher',
             'imagegallery=jenkins_jobs.modules.publishers:imagegallery',
             'trigger-parameterized-builds='
             'jenkins_jobs.modules.publishers:trigger_parameterized_builds',

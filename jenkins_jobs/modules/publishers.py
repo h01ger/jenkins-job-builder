@@ -99,6 +99,41 @@ def imagegallery(parser, xml_parent, data):
     XML.SubElement(gallery, 'markBuildAsUnstableIfNoArchivesFound').text = 'false'
 
 
+def htmlpublisher(parser, xml_parent, data):
+    """yaml: htmlpublisher
+    Publish HTML reports
+
+    :arg str name: report title
+    :arg str directory: html directory to archive
+    :arg str indexfiles: html index file(s)
+
+    Example::
+
+      publishers:
+        - htmlpublisher:
+            name: 'my favorite report'
+            directory: '.'
+            index-files: 'index.html'
+
+    """
+    html_publisher_parent = XML.SubElement(xml_parent, 'htmlpublisher.HtmlPublisher')
+    report_target = XML.SubElement(html_publisher_parent, 'reportTargets')
+    # FIXME: the plugin supports publishing several reports at once
+    target = XML.SubElement(report_target, 'htmlpublisher.HtmlPublisherTarget')
+    XML.SubElement(target, 'reportName').text = str(
+        data.get('name', ''))
+    XML.SubElement(target, 'reportDir').text = str(
+        data.get('directory', ''))
+    XML.SubElement(target, 'reportFiles').text = str(
+        data.get('indexfiles', ''))
+    keep = data.get('keepAll', False)
+    if keep:
+        XML.SubElement(target, 'keepAll').text = 'true'
+    else:
+        XML.SubElement(target, 'keepAll').text = 'false'
+    XML.SubElement(target, 'wrapperName').text = 'htmlpublisher-wrapper.html'
+
+
 def trigger_parameterized_builds(parser, xml_parent, data):
     """yaml: trigger-parameterized-builds
     Trigger parameterized builds of other jobs.
