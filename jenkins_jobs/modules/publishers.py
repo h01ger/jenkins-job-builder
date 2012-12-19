@@ -74,7 +74,7 @@ def imagegallery(parser, xml_parent, data):
 
     :arg str title: gallery title
     :arg str includes: path specifier for artifacts to include
-    :arg int image-width: image width in pixels
+    :arg str image-width: image width in pixels
 
     Example::
 
@@ -93,7 +93,7 @@ def imagegallery(parser, xml_parent, data):
         data.get('title', ''))
     XML.SubElement(gallery, 'includes').text = str(
         data.get('includes', ''))
-    XML.SubElement(gallery, 'imageWidth').text = int(
+    XML.SubElement(gallery, 'imageWidth').text = str(
         data.get('image-width', ''))
     #FIXME: this should be an option:
     XML.SubElement(gallery, 'markBuildAsUnstableIfNoArchivesFound').text = 'false'
