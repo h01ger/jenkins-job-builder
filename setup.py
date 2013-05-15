@@ -70,6 +70,7 @@ setuptools.setup(
         ],
         'jenkins_jobs.properties': [
             'github=jenkins_jobs.modules.properties:github',
+            'priority=jenkins_jobs.modules.properties:priority',
             'throttle=jenkins_jobs.modules.properties:throttle',
             'inject=jenkins_jobs.modules.properties:inject',
             'authenticated-build=jenkins_jobs.modules.properties:'
