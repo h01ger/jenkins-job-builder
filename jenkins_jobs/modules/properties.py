@@ -55,6 +55,26 @@ def github(parser, xml_parent, data):
     github_url.text = data['url']
 
 
+def priority(parser, xml_parent, data):
+    """yaml: priority
+    Defines the job priority
+    Requires the Jenkins `Priority Sort Plugin`.
+    <https://wiki.jenkins-ci.org/display/JENKINS/
+    Priority+Sorter+Plugin>`_
+
+    :arg int job-prio: the priority (default 100)
+
+    Example::
+
+      properties:
+        - priority:
+            job-prio: 120
+
+    """
+    priority = XML.SubElement(xml_parent, 'hudson.queueSorter.PrioritySorterJobProperty')
+    XML.SubElement(priority, 'priority').text = str(
+        data.get('job-prio', '100'))
+
 def throttle(parser, xml_parent, data):
     """yaml: throttle
     Throttles the number of builds for this job.
