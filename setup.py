@@ -115,6 +115,7 @@ setuptools.setup(
             'logparser=jenkins_jobs.modules.publishers:logparser',
             'copy-to-master=jenkins_jobs.modules.publishers:copy_to_master',
             'jira=jenkins_jobs.modules.publishers:jira',
+            'plot=jenkins_jobs.modules.publishers:plot',
         ],
         'jenkins_jobs.scm': [
             'git=jenkins_jobs.modules.scm:git',
