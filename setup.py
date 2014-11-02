@@ -130,6 +130,7 @@ setuptools.setup(
             'timeout=jenkins_jobs.modules.wrappers:timeout',
             'timestamps=jenkins_jobs.modules.wrappers:timestamps',
             'ansicolor=jenkins_jobs.modules.wrappers:ansicolor',
+            'live-screenshot=jenkins_jobs.modules.wrappers:live_screenshot',
             'mask-passwords=jenkins_jobs.modules.wrappers:mask_passwords',
             'build-name=jenkins_jobs.modules.wrappers:build_name',
             'workspace-cleanup=jenkins_jobs.modules.wrappers:'
